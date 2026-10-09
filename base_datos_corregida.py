@@ -1,6 +1,6 @@
 import sqlite3
 
-DB = 'tienda_ropa.db'
+DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tienda_ropa.db')
 
 conn = sqlite3.connect(DB)
 cursor = conn.cursor()
