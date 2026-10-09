@@ -5,7 +5,7 @@ import sqlite3
 app = Flask(__name__)
 CORS(app)
 
-DB = 'tienda_ropa.db'
+DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tienda_ropa.db')
 
 def get_db():
     conn = sqlite3.connect(DB)
