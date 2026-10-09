@@ -508,6 +508,8 @@
 </div>
 </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script>
   function switchAngle(angle) {
     const mainImg = document.getElementById('main-pdp-view');
@@ -587,21 +589,23 @@ async function cargarProducto() {
 
     try {
 
-        const respuesta = await fetch(
-            `http://127.0.0.1:5000/api/productos/${idProducto}`
-        );
-
-
-        if (!respuesta.ok) {
-
-            throw new Error(
-                "Producto no encontrado"
-            );
-
+        if (!window.auraSupabase) {
+            throw new Error("Falta configurar Supabase en supabase-config.js.");
         }
 
+        const { data, error } = await window.auraSupabase
+            .from("productos")
+            .select("id_producto,nombre,descripcion,precio,stock,imagen,categorias(nombre)")
+            .eq("id_producto", Number(idProducto))
+            .maybeSingle();
 
-        productoActual = await respuesta.json();
+        if (error) throw error;
+        if (!data) throw new Error("Producto no encontrado");
+
+        productoActual = {
+            ...data,
+            categoria: data.categorias?.nombre || "SIN CATEGORÍA"
+        };
 
 
         // ===============================
