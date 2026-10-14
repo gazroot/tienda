@@ -275,43 +275,33 @@
   align-items: start;
 }
 
-#product-grid .product-item {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  height: auto;
-  overflow: hidden;
+
+/* Imágenes reales de los productos */
+#product-grid .product-card {
+    min-width: 0;
 }
 
-#product-grid .product-item > img {
-  display: block !important;
-  width: 100% !important;
-  height: 320px !important;
-  min-height: 200px;
-  object-fit: cover;
-  object-position: center;
-  visibility: visible !important;
-  opacity: 1 !important;
+#product-grid .product-image {
+    width: 100%;
+    height: 350px;
+    padding: 0;
+    overflow: hidden;
+    background: #151515;
 }
 
-#product-grid .product-info {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 16px;
+#product-grid .product-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
 }
 
-@media (max-width: 600px) {
-  #product-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  #product-grid .product-item > img {
-    height: 220px !important;
-  }
+@media (max-width: 550px) {
+    #product-grid .product-image {
+        height: 300px;
+    }
 }
-
 
     </style>
 </head>
@@ -497,6 +487,30 @@ async function cargarProductos() {
 
                 </div>
             `;
+
+const contenedorImagen = tarjeta.querySelector(".product-image");
+contenedorImagen.textContent = "";
+
+if (producto.imagen && producto.imagen.trim()) {
+    const img = document.createElement("img");
+
+    img.src = producto.imagen.trim();
+    img.alt = producto.nombre || "Producto AURA // NØIR";
+    img.loading = "lazy";
+
+    img.onerror = () => {
+        console.error(
+            "Error cargando imagen:",
+            producto.nombre,
+            producto.imagen
+        );
+        contenedorImagen.textContent = "IMAGEN NO DISPONIBLE";
+    };
+
+    contenedorImagen.appendChild(img);
+} else {
+    contenedorImagen.textContent = "SIN IMAGEN";
+}
 
 
             productGrid.appendChild(tarjeta);
