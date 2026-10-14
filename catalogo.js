@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!window.auraSupabase) throw new Error("Configura supabase-config.js.");
     const { data, error } = await window.auraSupabase
       .from("productos")
-      .select("id_producto,nombre,descripcion,precio,stock,categorias(nombre)")
+      .select("id_producto,nombre,descripcion,precio,stock,categorias(nombre),imagen")
       .order("id_producto", { ascending: true });
     if (error) throw error;
     productGrid.innerHTML = "";
@@ -23,6 +23,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       info.append(title, desc, price, stock);
       const details = document.createElement("a"); details.href = `modelo.html?id=${p.id_producto}`; details.textContent = "VER PRODUCTO";
       info.append(details); card.append(info); productGrid.append(card);
+      const imagen = document.createElement("img");
+
+imagen.src = producto.imagen || "img/sin-imagen.jpg";
+imagen.alt = producto.nombre;
+imagen.loading = "lazy";
+
+tarjeta.appendChild(imagen);
     });
   } catch (e) {
     console.error("Error cargando productos desde Supabase:", e);
