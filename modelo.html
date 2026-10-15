@@ -516,21 +516,24 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script>
-  function switchAngle(angle) {
-    const mainImg = document.getElementById('main-pdp-view');
-    const buttons = document.querySelectorAll('.active-angle');
-    
-    if (angle === 'front') {
-      mainImg.src = 'placeholder';
-      mainImg.setAttribute('data-alt', 'Editorial avant-garde studio photograph of the luxury trench coat desestructurado in synth obsidian black on an abstract headless mannequin, architectural lapels with surgical acid neon green stitching accents, dramatic studio side lighting, high fashion Paris atelier look');
-    } else if (angle === 'body') {
-      mainImg.src = 'placeholder';
-      mainImg.setAttribute('data-alt', 'Avant-garde streetwear editorial photograph in an industrial concrete loft, model wearing voluminous oversized cocoon silhouette outerwear with deep structured pleats and utilitarian boots, dark brutalist aesthetic, film grain, muted charcoal tones');
-    } else if (angle === 'macro') {
-      mainImg.src = 'placeholder';
-      mainImg.setAttribute('data-alt', 'Macro detail close-up studio shot of a high luxury heavy black wool bomber jacket with curved oversized articulated balloon sleeves, ribbed cuffs and industrial matte zipper, brutalist dark studio lighting');
+
+function switchAngle(angle) {
+    // Solo hay una imagen guardada por producto en Supabase.
+    // No reemplazarla por "placeholder".
+
+    document.querySelectorAll(".active-angle").forEach(b => {
+        b.classList.remove("active-angle");
+    });
+
+    const boton = document.querySelector(
+        `[onclick="switchAngle('${angle}')"]`
+    );
+
+    if (boton) {
+        boton.classList.add("active-angle");
     }
-  }
+}
+
 
   function selectColor(name, btn) {
     document.getElementById('selected-color-name').textContent = name;
