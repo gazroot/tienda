@@ -546,11 +546,9 @@ if (producto.imagen && producto.imagen.trim()) {
 // VER PRODUCTO
 // =====================================================
 
+
 function verProducto(id) {
-
-    window.location.href =
-        `modelo.html?id=${id}`;
-
+    window.location.href = `modelo.html?id=${encodeURIComponent(id)}`;
 }
 
 
