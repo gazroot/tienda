@@ -517,22 +517,27 @@
 <script src="supabase-config.js"></script>
 <script>
 
+
 function switchAngle(angle) {
-    // Solo hay una imagen guardada por producto en Supabase.
-    // No reemplazarla por "placeholder".
+    // Por ahora, Supabase proporciona una sola imagen por producto.
+    // No reemplazar la imagen por "placeholder".
 
-    document.querySelectorAll(".active-angle").forEach(b => {
-        b.classList.remove("active-angle");
+    const botones = [
+        ["front", "01 FRONTAL"],
+        ["body", "02 EDITORIAL CUERPO"],
+        ["macro", "03 MICRO DETALLE"]
+    ];
+
+    botones.forEach(([nombre, texto]) => {
+        const boton = [...document.querySelectorAll("button")]
+            .find(b => b.textContent.includes(texto));
+
+        if (boton) {
+            boton.classList.toggle("active-angle", nombre === angle);
+        }
     });
-
-    const boton = document.querySelector(
-        `[onclick="switchAngle('${angle}')"]`
-    );
-
-    if (boton) {
-        boton.classList.add("active-angle");
-    }
 }
+
 
 
   function selectColor(name, btn) {
@@ -613,7 +618,48 @@ async function cargarProducto() {
         productoActual = {
             ...data,
             categoria: data.categorias?.nombre || "SIN CATEGORÍA"
+        
         };
+           
+const imagenPrincipal = document.getElementById("main-pdp-view");
+const urlImagen = typeof productoActual.imagen === "string"
+    ? productoActual.imagen.trim()
+    : "";
+
+if (imagenPrincipal) {
+    if (urlImagen) {
+        imagenPrincipal.style.display = "block";
+        imagenPrincipal.alt = productoActual.nombre || "Imagen del producto";
+
+        imagenPrincipal.onerror = function () {
+            console.error("No se pudo cargar la imagen:", urlImagen);
+            this.style.display = "none";
+
+            let aviso = this.parentElement.querySelector(".error-imagen-producto");
+
+            if (!aviso) {
+                aviso = document.createElement("p");
+                aviso.className = "error-imagen-producto";
+                aviso.style.cssText = "color:#fff;padding:20px;text-align:center;";
+                this.parentElement.appendChild(aviso);
+            }
+
+            aviso.textContent =
+                "No se pudo cargar la imagen. Revisa su URL en Supabase.";
+        };
+
+        imagenPrincipal.onload = function () {
+            const aviso = this.parentElement.querySelector(".error-imagen-producto");
+            if (aviso) aviso.remove();
+        };
+
+        imagenPrincipal.src = urlImagen;
+    } else {
+        imagenPrincipal.removeAttribute("src");
+        imagenPrincipal.alt = "Este producto no tiene una imagen registrada";
+        console.error("El producto no tiene URL de imagen en Supabase.");
+    }
+}
 
 
         // ===============================
