@@ -1,0 +1,401 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101010">
+  <title>Pasarela de pago | AURA // NØIR</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --fondo: #101010;
+      --panel: #191919;
+      --borde: #353535;
+      --texto: #f5f5f5;
+      --secundario: #aaa;
+      --acento: #d7ff3f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--fondo);
+      color: var(--texto);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    header {
+      padding: 24px 6%;
+      border-bottom: 1px solid var(--borde);
+      letter-spacing: 3px;
+      font-weight: bold;
+    }
+
+    main {
+      width: min(900px, 92%);
+      margin: 48px auto;
+    }
+
+    h1 {
+      font-size: clamp(28px, 5vw, 44px);
+      margin-bottom: 10px;
+    }
+
+    .subtitulo, .ayuda {
+      color: var(--secundario);
+      line-height: 1.6;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--borde);
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 24px;
+    }
+
+    .fila {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--borde);
+    }
+
+    .fila:last-child { border-bottom: 0; }
+
+    .total {
+      font-size: 23px;
+      font-weight: bold;
+      color: var(--acento);
+    }
+
+    .metodos {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .metodo {
+      border: 1px solid var(--borde);
+      border-radius: 10px;
+      padding: 22px;
+      background: #202020;
+    }
+
+    .metodo h2 { font-size: 20px; }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: 0;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 14px;
+      background: var(--acento);
+      color: #101010;
+    }
+
+    button:disabled {
+      opacity: .55;
+      cursor: wait;
+    }
+
+    .secundario {
+      background: transparent;
+      border: 1px solid var(--borde);
+      color: var(--texto);
+    }
+
+    #mensaje {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 6px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .oculto { display: none; }
+
+    footer {
+      padding: 24px;
+      text-align: center;
+      color: var(--secundario);
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>AURA // NØIR</header>
+
+  <main>
+    <p class="subtitulo">CHECKOUT / PAGO SEGURO</p>
+    <h1>Finaliza tu compra.</h1>
+    <p class="subtitulo">
+      Selecciona el medio de pago que prefieras.
+      Los valores se muestran en pesos colombianos (COP).
+    </p>
+
+    <section class="panel">
+      <h2>Resumen de tu pedido</h2>
+      <div id="productos">
+        <p class="ayuda">Cargando carrito...</p>
+      </div>
+
+      <div class="fila">
+        <strong>Total del pedido</strong>
+        <span class="total" id="total">$ 0 COP</span>
+      </div>
+      <p class="ayuda">
+        El importe definitivo debe ser validado por el servidor
+        antes de crear la transacción.
+      </p>
+    </section>
+
+    <section class="panel">
+      <h2>Selecciona tu medio de pago</h2>
+
+      <div class="metodos">
+        <article class="metodo">
+          <h2>Mercado Pago</h2>
+          <p class="ayuda">
+            Continúa al checkout de Mercado Pago para completar
+            el pago con los medios habilitados en tu cuenta.
+          </p>
+          <button id="btnMercadoPago" type="button">
+            PAGAR CON MERCADO PAGO
+          </button>
+        </article>
+
+        <article class="metodo">
+          <h2>Wompi</h2>
+          <p class="ayuda">
+            Continúa al checkout de Wompi para completar
+            el pago mediante tu comercio.
+          </p>
+          <button id="btnWompi" type="button">
+            PAGAR CON WOMPI
+          </button>
+        </article>
+      </div>
+
+      <div id="mensaje" class="oculto" role="status" aria-live="polite"></div>
+
+      <button class="secundario" type="button"
+        onclick="window.location.href='carrito.html'">
+        VOLVER AL CARRITO
+      </button>
+    </section>
+  </main>
+
+  <footer>
+    AURA // NØIR · Checkout · COP
+  </footer>
+
+  <!-- Cliente de Supabase y configuración pública del proyecto -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+
+  <script>
+    const formatoCOP = valor =>
+      new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+        maximumFractionDigits: 0
+      }).format(valor);
+
+    const leerCarrito = () => {
+      try {
+        const datos = JSON.parse(
+          localStorage.getItem("aura_noir_cart") || "[]"
+        );
+
+        if (!Array.isArray(datos)) return [];
+
+        return datos.filter(item =>
+          item &&
+          Number.isInteger(Number(item.id)) &&
+          Number(item.id) > 0 &&
+          Number.isInteger(Number(item.cantidad)) &&
+          Number(item.cantidad) > 0
+        );
+      } catch (error) {
+        console.error("No se pudo leer el carrito:", error);
+        return [];
+      }
+    };
+
+    const carrito = leerCarrito();
+
+    function mostrarMensaje(texto, error = false) {
+      const caja = document.getElementById("mensaje");
+      caja.textContent = texto;
+      caja.classList.remove("oculto");
+      caja.style.border = error
+        ? "1px solid #e66"
+        : "1px solid #777";
+    }
+
+    function mostrarCarrito() {
+      const contenedor = document.getElementById("productos");
+      const totalEl = document.getElementById("total");
+
+      if (!carrito.length) {
+        contenedor.innerHTML =
+          '<p class="ayuda">Tu carrito está vacío. Añade productos antes de pagar.</p>';
+
+        totalEl.textContent = formatoCOP(0);
+        document.getElementById("btnMercadoPago").disabled = true;
+        document.getElementById("btnWompi").disabled = true;
+        return;
+      }
+
+      contenedor.replaceChildren();
+
+      let totalVisual = 0;
+
+      carrito.forEach(item => {
+        const precio = Number(item.precio) || 0;
+        const cantidad = Number(item.cantidad);
+        totalVisual += precio * cantidad;
+
+        const fila = document.createElement("div");
+        fila.className = "fila";
+
+        const nombre = document.createElement("span");
+        nombre.textContent =
+          `${item.nombre || "Producto"} × ${cantidad}`;
+
+        const subtotal = document.createElement("strong");
+        subtotal.textContent = formatoCOP(precio * cantidad);
+
+        fila.append(nombre, subtotal);
+        contenedor.appendChild(fila);
+      });
+
+      totalEl.textContent = formatoCOP(totalVisual);
+    }
+
+    async function iniciarPago(proveedor, boton) {
+      if (!carrito.length) {
+        mostrarMensaje("Tu carrito está vacío.", true);
+        return;
+      }
+
+      const db = window.auraSupabase;
+
+      if (!db || !db.functions) {
+        mostrarMensaje(
+          "No se encontró la configuración de Supabase. Revisa supabase-config.js.",
+          true
+        );
+        return;
+      }
+
+      const botones = [
+        document.getElementById("btnMercadoPago"),
+        document.getElementById("btnWompi")
+      ];
+
+      botones.forEach(b => b.disabled = true);
+      boton.textContent = "CONECTANDO CON LA PASARELA...";
+
+      try {
+        // Enviamos únicamente IDs y cantidades.
+        // El servidor debe consultar los precios reales en Supabase.
+        const items = carrito.map(item => ({
+          id: Number(item.id),
+          cantidad: Number(item.cantidad)
+        }));
+
+        const nombreFuncion = proveedor === "mercadopago"
+          ? "crear-preferencia-mercadopago"
+          : "crear-checkout-wompi";
+
+        const { data, error } = await db.functions.invoke(
+          nombreFuncion,
+          {
+            body: { items }
+          }
+        );
+
+        if (error) throw error;
+        if (!data) throw new Error("El servidor no devolvió una respuesta.");
+
+        // Mercado Pago: la función debe devolver init_point
+        // de producción o sandbox_init_point en modo de pruebas.
+        // Wompi: la función debe devolver checkoutUrl ya firmado.
+        const destino = proveedor === "mercadopago"
+          ? (data.init_point || data.sandbox_init_point)
+          : data.checkoutUrl;
+
+        if (!destino) {
+          throw new Error(
+            "Falta la URL de checkout en la respuesta del servidor. Revisa la función Edge."
+          );
+        }
+
+        const url = new URL(destino);
+
+        // Evita redirecciones a sitios desconocidos.
+        const dominiosPermitidos = proveedor === "mercadopago"
+          ? [
+              "mercadopago.com",
+              "mercadopago.com.co",
+              "mercadopago.com.br",
+              "mercadopago.com.mx",
+              "mercadopago.cl",
+              "mercadopago.com.ar",
+              "mercadopago.com.uy",
+              "mercadopago.com.pe"
+            ]
+          : ["checkout.wompi.co"];
+
+        const dominioValido = dominiosPermitidos.some(dominio =>
+          url.hostname === dominio ||
+          url.hostname.endsWith("." + dominio)
+        );
+
+        if (url.protocol !== "https:" || !dominioValido) {
+          throw new Error("El servidor devolvió una URL de pago no válida.");
+        }
+
+        window.location.assign(url.href);
+
+      } catch (error) {
+        console.error("Error al iniciar el pago:", error);
+
+        mostrarMensaje(
+          error.message ||
+          "No se pudo iniciar el pago. Inténtalo nuevamente.",
+          true
+        );
+
+        botones.forEach(b => b.disabled = false);
+        document.getElementById("btnMercadoPago").textContent =
+          "PAGAR CON MERCADO PAGO";
+        document.getElementById("btnWompi").textContent =
+          "PAGAR CON WOMPI";
+      }
+    }
+
+    document.getElementById("btnMercadoPago").addEventListener(
+      "click",
+      event => iniciarPago("mercadopago", event.currentTarget)
+    );
+
+    document.getElementById("btnWompi").addEventListener(
+      "click",
+      event => iniciarPago("wompi", event.currentTarget)
+    );
+
+    mostrarCarrito();
+  </script>
+</body>
+</html>
